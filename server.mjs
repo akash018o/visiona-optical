@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { STORE_CONFIG, PRODUCTS, SERVICES, INQUIRY_TYPES } from "./config/store.js";
+import { STORE_CONFIG, PRODUCTS, SERVICES, INQUIRY_TYPES } from "./public/config/store.js";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(root, "public");
@@ -172,7 +172,6 @@ async function api(req, res, path) {
 async function staticFile(req, res, pathname) {
   let target;
   if (pathname === "/" || pathname === "/index.html") target = join(publicDir, "index.html");
-  else if (pathname === "/config/store.js") target = join(root, "config", "store.js");
   else {
     const clean = normalize(pathname.replace(/^\/+/, ""));
     target = resolve(publicDir, clean);

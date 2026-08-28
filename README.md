@@ -13,8 +13,8 @@ For a local preview only, you can set `ADMIN_PASSWORD` in `.env`; it is delibera
 
 ## What is configurable
 
-- `config/store.js` is the central, safe-to-share source for the temporary name, contact details, hours, map link, homepage copy, product showcase, and services.
-- Replace `public/assets/visiona-hero.png` and `public/assets/frame-collection.png` with real store photography while keeping the same names—or update the two image paths in `config/store.js`.
+- `public/config/store.js` is the central, safe-to-share source for the temporary name, contact details, hours, map link, homepage copy, product showcase, and services. Keeping it inside `public` also makes it available to Vercel.
+- Replace `public/assets/visiona-hero.png` and `public/assets/frame-collection.png` with real store photography while keeping the same names—or update the two image paths in `public/config/store.js`.
 - Admin edits persist in `data/store-data.json`, which is created when the server first runs.
 
 ## Connected workflows

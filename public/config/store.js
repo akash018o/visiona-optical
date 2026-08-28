@@ -162,3 +162,4 @@ export const PRODUCTS = [
 ];
 
 export const INQUIRY_TYPES = ["Eyeglasses", "Sunglasses", "Kids Eyewear", "Eye Testing", "Lenses", "Frame Availability", "General Question", "Other"];
+
