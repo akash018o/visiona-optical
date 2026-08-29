@@ -6,6 +6,35 @@ const toastRoot = document.querySelector("#toast-root");
 let mobileOpen = false;
 let adminTab = "overview";
 let adminData = null;
+let editingProductId = null;
+
+// Shrinks/compresses a photo in the browser before upload so phone photos
+// (often 5-10MB) comfortably fit the server's upload limit.
+function resizeImage(file, maxDim = 1400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Couldn't read that file."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Couldn't read that image."));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 let runtime = { store: STORE_CONFIG, products: PRODUCTS, services: SERVICES, reviews: [] };
 
 const nav = [
@@ -74,9 +103,14 @@ function pageHero(eyebrow, heading, text) {
   return `<section class="page-hero"><div class="container"><p class="eyebrow">${esc(eyebrow)}</p><h1>${heading}</h1><p>${esc(text)}</p></div></section>`;
 }
 
+function productImageStyle(product) {
+  return product.image
+    ? `background-image:url('${esc(product.image)}');background-size:cover;background-position:center`
+    : `--img-pos:${esc(product.imagePosition)}`;
+}
 function productCard(product) {
   return `<article class="card product-card">
-    <a class="product-image" href="#product/${encodeURIComponent(product.id)}" style="--img-pos:${esc(product.imagePosition)}" aria-label="View ${esc(product.name)}"></a>
+    <a class="product-image" href="#product/${encodeURIComponent(product.id)}" style="${productImageStyle(product)}" aria-label="View ${esc(product.name)}"></a>
     <div class="product-content"><span class="pill pill--soft">${esc(categoryTitle(product.category))}</span><h3>${esc(product.name)}</h3><p>${esc(product.style)} · ${esc(product.color)}</p><div class="product-meta"><span class="pill pill--warm">${esc(product.availability)}</span></div><button class="button button--ghost button--small" data-action="inquire" data-product="${esc(product.id)}">Ask about this frame</button></div>
   </article>`;
 }
@@ -136,7 +170,7 @@ function attachCollectionFilters() {
 function productPage(id) {
   const product = getProduct(id);
   if (!product) return notFound();
-  return layout(`<section class="product-page"><div class="container"><a class="back-link" href="#eyewear">← Back to collection</a><div class="product-detail"><div class="product-detail-image" style="--img-pos:${esc(product.imagePosition)}" role="img" aria-label="${esc(product.name)} showcase frame"></div><div><span class="pill pill--soft">${esc(categoryTitle(product.category))}</span><h1>${esc(product.name)}</h1><p>${esc(product.description)}</p><dl class="spec-list"><div><dt>Age group</dt><dd>${esc(product.ageGroup)}</dd></div><div><dt>Frame shape</dt><dd>${esc(product.shape)}</dd></div><div><dt>Material</dt><dd>${esc(product.material)}</dd></div><div><dt>Colour</dt><dd>${esc(product.color)}</dd></div></dl><p><span class="pill pill--warm">${esc(product.availability)}</span></p><div class="hero-actions"><button class="button button--primary" data-action="inquire" data-product="${esc(product.id)}">Ask about this frame</button><a class="button button--ghost" href="${waHref(defaultMessage(product))}" target="_blank" rel="noopener">WhatsApp us</a></div></div></div></div></section>`, "eyewear");
+  return layout(`<section class="product-page"><div class="container"><a class="back-link" href="#eyewear">← Back to collection</a><div class="product-detail"><div class="product-detail-image" style="${productImageStyle(product)}" role="img" aria-label="${esc(product.name)} showcase frame"></div><div><span class="pill pill--soft">${esc(categoryTitle(product.category))}</span><h1>${esc(product.name)}</h1><p>${esc(product.description)}</p><dl class="spec-list"><div><dt>Age group</dt><dd>${esc(product.ageGroup)}</dd></div><div><dt>Frame shape</dt><dd>${esc(product.shape)}</dd></div><div><dt>Material</dt><dd>${esc(product.material)}</dd></div><div><dt>Colour</dt><dd>${esc(product.color)}</dd></div></dl><p><span class="pill pill--warm">${esc(product.availability)}</span></p><div class="hero-actions"><button class="button button--primary" data-action="inquire" data-product="${esc(product.id)}">Ask about this frame</button><a class="button button--ghost" href="${waHref(defaultMessage(product))}" target="_blank" rel="noopener">WhatsApp us</a></div></div></div></div></section>`, "eyewear");
 }
 
 function services() {
@@ -182,7 +216,10 @@ function adminContent(data, approved) { if (adminTab === "overview") return `<di
   if (adminTab === "inquiries") return adminTable("Inquiries", data.inquiries, ["Name","Type","Message","Date","Status"], item => `<tr><td><strong>${esc(item.name)}</strong><br>${esc(item.phone)}<br>${esc(item.email)}</td><td>${esc(item.type)}</td><td>${esc(item.product ? `${item.product}: ` : "")}${esc(item.message)}</td><td>${formatDate(item.createdAt)}</td><td><select class="status-select" data-action="update-status" data-kind="inquiries" data-id="${item.id}"><option ${item.status==="new"?"selected":""}>new</option><option ${item.status==="contacted"?"selected":""}>contacted</option><option ${item.status==="resolved"?"selected":""}>resolved</option></select></td></tr>`);
   if (adminTab === "appointments") return adminTable("Appointment requests", data.appointments, ["Visitor","Requested time","Message","Date","Status"], item => `<tr><td><strong>${esc(item.name)}</strong><br>${esc(item.phone)}<br>${esc(item.email || "—")}</td><td>${esc(item.preferredDate)}<br>${esc(item.preferredTime)} · ${esc(item.ageGroup)}</td><td>${esc(item.message || "—")}</td><td>${formatDate(item.createdAt)}</td><td><select class="status-select" data-action="update-status" data-kind="appointments" data-id="${item.id}">${["pending","contacted","confirmed","completed","cancelled"].map(status=>`<option ${item.status===status?"selected":""}>${status}</option>`).join("")}</select></td></tr>`);
   if (adminTab === "reviews") return adminTable("Review moderation", data.reviews, ["Customer","Rating","Review","Submitted","Actions"], item => `<tr><td><strong>${esc(item.name)}</strong></td><td>${"★".repeat(item.rating)}</td><td>${esc(item.review)}</td><td>${formatDate(item.createdAt)}</td><td>${item.status === "pending" ? `<button class="button button--primary button--small" data-action="review-status" data-id="${item.id}" data-status="approved">Approve</button> <button class="button button--ghost button--small" data-action="review-status" data-id="${item.id}" data-status="rejected">Reject</button>` : `<span class="pill ${item.status === "approved" ? "pill--soft" : "pill--red"}">${esc(item.status)}</span>`} <button class="button button--danger button--small" data-action="delete-review" data-id="${item.id}">Delete</button></td></tr>`);
-  if (adminTab === "products") return `<section class="card admin-section"><h2>Showcase products</h2><p class="admin-empty">Products are display and inquiry only. They never become products for online purchase.</p><div class="product-admin">${data.products.map(product => `<div class="product-admin-row"><div><strong>${esc(product.name)}</strong><p>${esc(categoryTitle(product.category))} · ${esc(product.shape)} · ${esc(product.availability)}</p></div><div style="display:flex;gap:.4rem"><button class="button button--ghost button--small" data-action="toggle-featured" data-id="${product.id}">${product.featured ? "Remove feature" : "Feature"}</button><button class="button button--danger button--small" data-action="delete-product" data-id="${product.id}">Delete</button></div></div>`).join("")}</div></section><section class="card form-card" style="margin-top:1rem"><h2>Add a showcase frame</h2><form data-form="product" class="form-grid"><div class="form-grid form-grid--two"><label>Frame name *<input name="name" required></label><label>Category *<select name="category">${CATEGORIES.map(c=>`<option value="${c.id}">${c.title}</option>`).join("")}</select></label></div><div class="form-grid form-grid--two"><label>Shape *<input name="shape" required></label><label>Material *<input name="material" required></label></div><div class="form-grid form-grid--two"><label>Colour *<input name="color" required></label><label>Age group *<input name="ageGroup" value="Adults" required></label></div><label>Description *<textarea name="description" required></textarea></label><button class="button button--primary" type="submit">Add showcase frame</button></form></section>`;
+  if (adminTab === "products") {
+    const editing = data.products.find(p => p.id === editingProductId);
+    return `<section class="card admin-section"><h2>Showcase products</h2><p class="admin-empty">Products are display and inquiry only. They never become products for online purchase.</p><div class="product-admin">${data.products.map(product => `<div class="product-admin-row"><div style="display:flex;gap:.75rem;align-items:center">${product.image ? `<img src="${esc(product.image)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:.5rem;flex-shrink:0">` : `<div style="width:56px;height:56px;border-radius:.5rem;background:#e7e2d8;flex-shrink:0"></div>`}<div><strong>${esc(product.name)}</strong><p>${esc(categoryTitle(product.category))} · ${esc(product.shape)} · ${esc(product.availability)}</p></div></div><div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="button button--ghost button--small" data-action="edit-product" data-id="${product.id}">Edit</button><button class="button button--ghost button--small" data-action="toggle-featured" data-id="${product.id}">${product.featured ? "Remove feature" : "Feature"}</button><button class="button button--danger button--small" data-action="delete-product" data-id="${product.id}">Delete</button></div></div>`).join("")}</div></section><section class="card form-card" style="margin-top:1rem"><h2>${editing ? `Edit “${esc(editing.name)}”` : "Add a showcase frame"}</h2><form data-form="product" class="form-grid"><div class="form-grid form-grid--two"><label>Frame name *<input name="name" required value="${editing ? esc(editing.name) : ""}"></label><label>Category *<select name="category">${CATEGORIES.map(c=>`<option value="${c.id}" ${editing?.category===c.id?"selected":""}>${c.title}</option>`).join("")}</select></label></div><div class="form-grid form-grid--two"><label>Shape *<input name="shape" required value="${editing ? esc(editing.shape) : ""}"></label><label>Material *<input name="material" required value="${editing ? esc(editing.material) : ""}"></label></div><div class="form-grid form-grid--two"><label>Colour *<input name="color" required value="${editing ? esc(editing.color) : ""}"></label><label>Age group *<input name="ageGroup" required value="${editing ? esc(editing.ageGroup) : "Adults"}"></label></div><label>Availability<input name="availability" value="${editing ? esc(editing.availability) : "Ask in store"}"></label><label>Description *<textarea name="description" required>${editing ? esc(editing.description) : ""}</textarea></label><label>Photo ${editing?.image ? "<span>(uploading a new one replaces the current photo)</span>" : "<span>(optional — JPEG, PNG, or WEBP, under 4MB)</span>"}<input type="file" name="photo" accept="image/png,image/jpeg,image/webp"></label><div style="display:flex;gap:.6rem"><button class="button button--primary" type="submit">${editing ? "Save changes" : "Add showcase frame"}</button>${editing ? `<button class="button button--ghost" type="button" data-action="cancel-edit-product">Cancel</button>` : ""}</div></form></section>`;
+  }
   if (adminTab === "services") return `<section class="card admin-section"><h2>Services shown publicly</h2><p class="admin-empty">Only enabled services are shown on the Services page.</p><div class="product-admin">${data.services.map(service => `<div class="product-admin-row"><div><strong>${esc(service.title)}</strong><p>${esc(service.description)}</p></div><button class="button ${service.enabled ? "button--primary" : "button--ghost"} button--small" data-action="toggle-service" data-id="${service.id}">${service.enabled ? "Enabled" : "Disabled"}</button></div>`).join("")}</div></section>`;
   if (adminTab === "content") return `<section class="card form-card"><h2>Homepage content</h2><p>Keep the core message current without changing the site layout.</p><form data-form="store" class="form-grid"><label>Announcement<input name="announcement" value="${esc(data.store.announcement)}"></label><label>Hero title<textarea name="heroTitle">${esc(data.store.heroTitle)}</textarea></label><label>Hero description<textarea name="heroDescription">${esc(data.store.heroDescription)}</textarea></label><button class="button button--primary" type="submit">Save homepage content</button></form></section>`;
   return `<section class="card form-card"><h2>Store information</h2><p>These values are used across the website. For a permanent launch configuration, also update <code>public/config/store.js</code>.</p><form data-form="store" class="form-grid"><div class="form-grid form-grid--two"><label>Store name<input name="name" value="${esc(data.store.name)}"></label><label>Phone<input name="phone" value="${esc(data.store.phone)}"></label></div><div class="form-grid form-grid--two"><label>WhatsApp number<input name="whatsapp" value="${esc(data.store.whatsapp)}"></label><label>Email<input name="email" type="email" value="${esc(data.store.email)}"></label></div><label>Address<input name="address" value="${esc(data.store.address)}"></label><label>Google Maps URL<input name="mapUrl" value="${esc(data.store.mapUrl)}"></label><button class="button button--primary" type="submit">Save store information</button></form></section>`; }
@@ -193,7 +230,37 @@ async function api(path, options = {}) { const headers = { "Content-Type": "appl
 function validateForm(form) { let valid = true; form.querySelectorAll("[required]").forEach(input => { const error = input.closest("label")?.querySelector(".field-error"); let message = ""; if (!input.value.trim()) message = "This field is required."; else if (input.type === "email" && !input.validity.valid) message = "Enter a valid email address."; else if (input.name === "phone" && input.value.replace(/\D/g, "").length < 7) message = "Enter a valid phone number."; if (error) error.textContent = message; if (message) valid = false; }); return valid; }
 async function submitCustomerForm(form) { if (!validateForm(form)) { toast("Please check the highlighted fields.", true); return; } const kind = form.dataset.form; const endpoint = kind === "appointment" ? "/api/appointments" : kind === "review" ? "/api/reviews" : "/api/inquiries"; const data = Object.fromEntries(new FormData(form)); const button = form.querySelector("button[type=submit]"); button.disabled = true; button.textContent = "Sending…"; try { const result = await api(endpoint, { method: "POST", body: JSON.stringify(data) }); form.reset(); closeModal(); toast(result.message || "Thanks! Your submission has been received."); } catch (error) { toast(error.message, true); } finally { button.disabled = false; button.textContent = kind === "appointment" ? "Send appointment request" : kind === "review" ? "Submit for approval" : "Send inquiry"; } }
 async function submitLogin(form) { if (!validateForm(form)) return; const button = form.querySelector("button"); button.disabled = true; try { const result = await api("/api/auth/login", { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(form))) }); sessionStorage.setItem("visiona-token", result.token); adminData = null; render(); toast("Signed in."); } catch (error) { toast(error.message, true); } finally { button.disabled = false; } }
-async function submitProduct(form) { if (!validateForm(form)) return; try { await api("/api/admin/products", { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(form))) }); await loadAdmin(); toast("Showcase frame added."); } catch (error) { toast(error.message, true); } }
+async function submitProduct(form) {
+  if (!validateForm(form)) return;
+  const button = form.querySelector("button[type=submit]");
+  const originalLabel = button.textContent;
+  button.disabled = true;
+  try {
+    const formData = new FormData(form);
+    const fileInput = form.querySelector('input[name="photo"]');
+    const file = fileInput?.files?.[0];
+    formData.delete("photo");
+    const data = Object.fromEntries(formData);
+    if (file) {
+      button.textContent = "Processing photo…";
+      data.imageData = await resizeImage(file);
+    }
+    if (editingProductId) {
+      await api(`/api/admin/products/${editingProductId}`, { method: "PATCH", body: JSON.stringify(data) });
+      toast("Showcase frame updated.");
+    } else {
+      await api("/api/admin/products", { method: "POST", body: JSON.stringify(data) });
+      toast("Showcase frame added.");
+    }
+    editingProductId = null;
+    await loadAdmin();
+  } catch (error) {
+    toast(error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
+}
 async function submitStore(form) { try { const saved = await api("/api/admin/store", { method: "PATCH", body: JSON.stringify(Object.fromEntries(new FormData(form))) }); runtime.store = saved.store; await loadAdmin(); toast("Store information saved."); } catch (error) { toast(error.message, true); } }
 async function loadRuntime() { try { const data = await api("/api/public"); runtime = { ...runtime, ...data }; setSchema(); } catch { /* Static design remains visible if the server is not running. */ } }
 async function loadAdmin() { try { adminData = await api("/api/admin"); render(); } catch (error) { if (/author/i.test(error.message)) { sessionStorage.removeItem("visiona-token"); adminData = null; render(); } else toast(error.message, true); } }
@@ -235,6 +302,8 @@ document.addEventListener("click", event => {
   if (action === "delete-review") deleteReview(target.dataset.id);
   if (action === "toggle-featured") toggleFeatured(target.dataset.id);
   if (action === "delete-product") deleteProduct(target.dataset.id);
+  if (action === "edit-product") { editingProductId = target.dataset.id; render(); document.querySelector('[data-form="product"]')?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  if (action === "cancel-edit-product") { editingProductId = null; render(); }
   if (action === "toggle-service") toggleService(target.dataset.id);
 });
 document.addEventListener("change", event => { const item = event.target; if (item.dataset.action === "update-status") updateStatus(item.dataset.kind, item.dataset.id, item.value); });
@@ -243,7 +312,7 @@ async function updateStatus(kind, id, status) { try { await api(`/api/admin/${ki
 async function updateReview(id, status) { try { await api(`/api/admin/reviews/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); await loadAdmin(); toast(`Review ${status}.`); } catch (error) { toast(error.message, true); } }
 async function deleteReview(id) { if (!confirm("Delete this review permanently?")) return; try { await api(`/api/admin/reviews/${id}`, { method: "DELETE" }); await loadAdmin(); toast("Review deleted."); } catch (error) { toast(error.message, true); } }
 async function toggleFeatured(id) { const product = adminData?.products.find(item => item.id === id); if (!product) return; try { await api(`/api/admin/products/${id}`, { method: "PATCH", body: JSON.stringify({ featured: !product.featured }) }); await loadAdmin(); toast("Product updated."); } catch (error) { toast(error.message, true); } }
-async function deleteProduct(id) { if (!confirm("Delete this showcase frame permanently?")) return; try { await api(`/api/admin/products/${id}`, { method: "DELETE" }); await loadAdmin(); toast("Showcase frame deleted."); } catch (error) { toast(error.message, true); } }
+async function deleteProduct(id) { if (!confirm("Delete this showcase frame permanently?")) return; try { await api(`/api/admin/products/${id}`, { method: "DELETE" }); if (editingProductId === id) editingProductId = null; await loadAdmin(); toast("Showcase frame deleted."); } catch (error) { toast(error.message, true); } }
 async function toggleService(id) { const service = adminData?.services.find(item => item.id === id); if (!service) return; try { await api(`/api/admin/services/${id}`, { method: "PATCH", body: JSON.stringify({ enabled: !service.enabled }) }); await loadAdmin(); toast("Service visibility updated."); } catch (error) { toast(error.message, true); } }
 window.addEventListener("hashchange", () => { closeModal(); render(); });
 setSchema();

@@ -8,7 +8,7 @@ in `api/`.
 ## Start locally
 
 1. Create a free project at [supabase.com](https://supabase.com) if you don't have one yet.
-2. In the Supabase SQL editor, run [`database/app-state-schema.sql`](database/app-state-schema.sql).
+2. In the Supabase SQL editor, run [`database/app-state-schema.sql`](database/app-state-schema.sql) and [`database/product-images-storage.sql`](database/product-images-storage.sql).
 3. Copy `.env.example` to `.env` and fill in:
    - `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` — Project Settings -> API.
    - `SUPABASE_SERVICE_ROLE_KEY` — same page, the **secret** key. Server-only, never commit it.
@@ -26,8 +26,9 @@ Import the repo in Vercel as normal, then in the Vercel project's **Environment 
 ## What is configurable
 
 - `public/config/store.js` is the central, safe-to-share source for the store name, contact details, hours, map link, homepage copy, product showcase, and services.
-- Replace `public/assets/visiona-hero.png` and `public/assets/frame-collection.png` with real store photography while keeping the same names — or update the two image paths in `public/config/store.js`.
-- Admin edits persist in Supabase (see [`database/app-state-schema.sql`](database/app-state-schema.sql)), so they survive redeploys and work correctly across serverless function invocations.
+- **Product photos are owner-editable, no code needed.** In `/admin` → Products, "Add a showcase frame" or "Edit" on an existing one now includes a Photo field — upload a JPEG/PNG/WEBP (under 4MB; large phone photos are automatically shrunk in the browser before upload) and it's stored in Supabase Storage and shown on the site immediately.
+- The **hero banner** (`public/assets/visiona-hero.png`) and **about/gallery images** (`public/assets/frame-collection.png`) are still static files replaced by editing the repo — they aren't per-product, so they didn't fit the same admin-upload flow. Worth giving these the same treatment later if the owner wants to update them without a deploy.
+- Admin edits persist in Supabase (see [`database/app-state-schema.sql`](database/app-state-schema.sql) and [`database/product-images-storage.sql`](database/product-images-storage.sql)), so they survive redeploys and work correctly across serverless function invocations.
 
 ## Connected workflows
 
@@ -40,7 +41,7 @@ Import the repo in Vercel as normal, then in the Vercel project's **Environment 
 
 - [ ] Resolve the store name: `public/config/store.js` currently has `name: "RUDRA OPTICAL"` — confirmed as the real name, now used consistently everywhere.
 - [ ] Replace the temporary business details in `public/config/store.js` — the `about.story` text, `mapUrl`, and the phone/email currently there.
-- [ ] Replace `public/assets/visiona-hero.png` and `public/assets/frame-collection.png` with real photos.
+- [ ] Replace `public/assets/visiona-hero.png` and `public/assets/frame-collection.png` (hero banner + about/gallery imagery) with real photos — product photos themselves are now handled in `/admin`, no code change needed.
 - [ ] Run `node scripts/hash-password.mjs` for a real admin password and set a real random `TOKEN_SECRET` in Vercel — don't ship the placeholder values from `.env.example`.
 - [ ] Configure `RESEND_API_KEY` / `EMAIL_FROM` so you actually get emailed when someone submits a form.
 - [ ] Consider migrating from `app_state`/`rate_limits` to the fully-normalized [`database/schema.sql`](database/schema.sql) once you need richer queries (e.g. filtering products by category in SQL) — not required to launch.
