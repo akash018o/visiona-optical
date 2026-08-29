@@ -35,10 +35,10 @@ function resizeImage(file, maxDim = 1400, quality = 0.82) {
     reader.readAsDataURL(file);
   });
 }
-let runtime = { store: STORE_CONFIG, products: PRODUCTS, services: SERVICES, reviews: [] };
+let runtime = { store: STORE_CONFIG, products: PRODUCTS, services: SERVICES, reviews: [], gallery: [] };
 
 const nav = [
-  ["home", "Home"], ["eyewear", "Eyewear"], ["services", "Services"], ["eye-test", "Eye Testing"],
+  ["home", "Home"], ["eyewear", "Eyewear"], ["gallery", "Gallery"], ["services", "Services"], ["eye-test", "Eye Testing"],
   ["about", "About"], ["reviews", "Reviews"], ["contact", "Contact"]
 ];
 
@@ -198,8 +198,33 @@ function reviews() { const count = runtime.reviews.length; const average = count
   <section class="section section--cream"><div class="container form-layout"><div><div class="rating-summary"><strong>${average}</strong><div class="stars">★★★★★</div><p>${count ? `${count} approved review${count === 1 ? "" : "s"}` : "No approved reviews yet"}</p></div>${reviewList(runtime.reviews)}</div><div class="card form-card"><h2>Write a review</h2><p>Thank you for taking the time. Your review will be submitted for approval before it is displayed publicly.</p>${reviewForm()}</div></div></section>`, "reviews"); }
 function reviewForm() { return `<form data-form="review" novalidate><div class="form-grid"><label>Name *<input name="name" autocomplete="name" required><small class="field-error"></small></label><label>Rating *<select name="rating" required><option value="">Select a rating</option><option value="5">5 — Excellent</option><option value="4">4 — Very good</option><option value="3">3 — Good</option><option value="2">2 — Fair</option><option value="1">1 — Needs improvement</option></select><small class="field-error"></small></label><label>Review *<textarea name="review" required placeholder="Please share your experience in your own words."></textarea><small class="field-error"></small></label><button class="button button--primary" type="submit">Submit for approval</button></div></form>`; }
 
-function gallery() { return layout(`${pageHero("Gallery", "A glimpse inside Rudra Optical.", "Temporary imagery for the prototype. The store owner can replace every image later from the media folder or CMS integration.")}
-  <section class="section section--cream"><div class="container"><div class="gallery-grid">${["Store", "Eyewear", "Eye testing", "Frame guidance", "The collection"].map(label => `<div class="gallery-item"><span>${label}</span></div>`).join("")}</div></div></section>`, "about"); }
+const GALLERY_CATEGORIES = ["Store exterior", "Store interior", "Eye-testing room", "Staff", "New collections", "Events"];
+
+function gallery() {
+  const items = runtime.gallery || [];
+  const categories = ["All", ...GALLERY_CATEGORIES.filter(cat => items.some(item => item.category === cat))];
+  return layout(`${pageHero("Gallery", "A glimpse inside Rudra Optical.", "Photos from the store — added and updated any time by the team, no code required.")}
+  <section class="section section--cream"><div class="container">
+    ${items.length ? `<div class="filter-row">${categories.map(cat => `<button class="chip ${cat === "All" ? "active" : ""}" data-gallery-filter="${esc(cat)}">${esc(cat)}</button>`).join("")}</div>` : ""}
+    <div class="gallery-grid" id="gallery-grid">${items.length ? items.map(galleryTile).join("") : `<p class="admin-empty">Photos will appear here once the team adds them from the admin panel.</p>`}</div>
+  </div></section>`, "gallery");
+}
+function galleryTile(item) {
+  return `<button class="gallery-item" type="button" data-action="view-gallery-item" data-id="${item.id}" data-category="${esc(item.category || "")}" style="background-image:url('${esc(item.image)}');background-size:cover;background-position:center" aria-label="${esc(item.title || "Gallery photo")}">${!item.title ? "" : `<span>${esc(item.title)}</span>`}</button>`;
+}
+function attachGalleryFilters() {
+  const chips = document.querySelectorAll("[data-gallery-filter]");
+  chips.forEach(chip => chip.addEventListener("click", () => {
+    const category = chip.dataset.galleryFilter;
+    chips.forEach(c => c.classList.toggle("active", c === chip));
+    document.querySelectorAll("#gallery-grid .gallery-item").forEach(tile => {
+      tile.style.display = category === "All" || tile.dataset.category === category ? "" : "none";
+    });
+  }));
+}
+function galleryModal(item) {
+  return `<div class="modal-backdrop" data-action="close-modal"><div class="modal" role="dialog" aria-modal="true" data-modal-content><div class="modal-top"><h2>${esc(item.title || "Gallery photo")}</h2><button class="close-modal" data-action="close-modal" aria-label="Close">×</button></div><div style="width:100%;aspect-ratio:4/3;background-image:url('${esc(item.image)}');background-size:cover;background-position:center;border-radius:.75rem"></div>${item.description ? `<p style="margin-top:1rem">${esc(item.description)}</p>` : ""}</div></div>`;
+}
 
 function legal(kind) { const privacy = kind === "privacy"; return layout(`<section class="section section--paper"><article class="container legal"><p class="eyebrow">${privacy ? "Privacy policy" : "Terms & conditions"}</p><h1>${privacy ? "A simple approach to your information." : "A simple agreement for using this site."}</h1>${privacy ? `<h2>What we collect</h2><p>When you submit an inquiry, appointment request, or review, we collect the details shown on that form. We use them only to respond to your request, manage the appointment or review, and improve store service.</p><h2>How we use it</h2><p>We do not publish reviews until the store team approves them. We do not sell personal information. We may retain submissions for reasonable business record-keeping and customer-service purposes.</p><h2>Contact</h2><p>Contact ${esc(runtime.store.name)} at <a href="mailto:${esc(runtime.store.email)}"><u>${esc(runtime.store.email)}</u></a> if you have a question about your information. Replace this starter text with advice tailored to your local privacy obligations before launch.</p>` : `<h2>Using this website</h2><p>This site provides information about a local optical store, lets visitors request an eye-test appointment, and enables customer inquiries. It does not offer online sales, prices, payments, shipping, or automatic appointment confirmation.</p><h2>Appointment requests</h2><p>An appointment request is not confirmed until the store contacts you directly. Availability may change.</p><h2>Information on this site</h2><p>Frame availability and services can change. Please contact the store or visit in person for current information. Replace this starter text with terms appropriate to your business before launch.</p>`}</article></section>`, kind); }
 
@@ -211,7 +236,7 @@ function openModal(html) { modalRoot.innerHTML = html; modalRoot.querySelector("
 function closeModal() { modalRoot.innerHTML = ""; }
 
 function adminLogin() { return `<div class="admin-shell"><header class="admin-head"><a class="brand" href="#/"><span class="brand-mark"></span><span>${esc(runtime.store.name)}</span></a><a class="button button--light button--small" href="#/">View website</a></header><main class="admin-login"><form class="card form-card" data-form="login" novalidate><p class="eyebrow">Protected area</p><h2>Store admin</h2><p>Sign in to review inquiries, appointments, and customer reviews.</p><div class="form-grid"><label>Admin password<input name="password" type="password" autocomplete="current-password" required><small class="field-error"></small></label><button class="button button--primary" type="submit">Sign in</button></div><p class="form-note">For security, set <code>ADMIN_PASSWORD</code> and <code>TOKEN_SECRET</code> in your server environment before launch.</p></form></main></div>`; }
-function admin() { if (!sessionStorage.getItem("visiona-token")) return adminLogin(); if (!adminData) loadAdmin(); const data = adminData || { inquiries: [], appointments: [], reviews: [], products: runtime.products, services: runtime.services, store: runtime.store }; const approved = data.reviews.filter(r => r.status === "approved").length; return `<div class="admin-shell"><header class="admin-head"><a class="brand" href="#/"><span class="brand-mark"></span><span>${esc(runtime.store.name)} · ADMIN</span></a><div style="display:flex;gap:.5rem"><a class="button button--light button--small" href="#/">View site</a><button class="button button--ghost button--small" style="color:white;border-color:#849188" data-action="logout">Sign out</button></div></header><main class="admin-main"><p class="eyebrow">Store workspace</p><h1>Good morning.</h1><div class="admin-tabs">${[["overview","Overview"],["inquiries","Inquiries"],["appointments","Appointments"],["reviews","Reviews"],["products","Products"],["services","Services"],["store","Store info"],["content","Site content"]].map(([id,label]) => `<button class="${adminTab===id?"active":""}" data-action="admin-tab" data-tab="${id}">${label}</button>`).join("")}</div>${adminContent(data, approved)}</main></div>`; }
+function admin() { if (!sessionStorage.getItem("visiona-token")) return adminLogin(); if (!adminData) loadAdmin(); const data = adminData || { inquiries: [], appointments: [], reviews: [], products: runtime.products, services: runtime.services, store: runtime.store }; const approved = data.reviews.filter(r => r.status === "approved").length; return `<div class="admin-shell"><header class="admin-head"><a class="brand" href="#/"><span class="brand-mark"></span><span>${esc(runtime.store.name)} · ADMIN</span></a><div style="display:flex;gap:.5rem"><a class="button button--light button--small" href="#/">View site</a><button class="button button--ghost button--small" style="color:white;border-color:#849188" data-action="logout">Sign out</button></div></header><main class="admin-main"><p class="eyebrow">Store workspace</p><h1>Good morning.</h1><div class="admin-tabs">${[["overview","Overview"],["inquiries","Inquiries"],["appointments","Appointments"],["reviews","Reviews"],["products","Products"],["gallery","Gallery"],["services","Services"],["store","Store info"],["content","Site content"]].map(([id,label]) => `<button class="${adminTab===id?"active":""}" data-action="admin-tab" data-tab="${id}">${label}</button>`).join("")}</div>${adminContent(data, approved)}</main></div>`; }
 function adminContent(data, approved) { if (adminTab === "overview") return `<div class="metric-grid"><div class="card metric"><strong>${data.inquiries.filter(x=>x.status==="new").length}</strong><span>New inquiries</span></div><div class="card metric"><strong>${data.appointments.filter(x=>x.status==="pending").length}</strong><span>Pending appointments</span></div><div class="card metric"><strong>${data.reviews.filter(x=>x.status==="pending").length}</strong><span>Reviews to review</span></div><div class="card metric"><strong>${approved}</strong><span>Approved reviews</span></div></div><section class="card admin-section"><h2>What needs attention</h2><p class="admin-empty">${data.inquiries.filter(x=>x.status==="new").length || data.appointments.filter(x=>x.status==="pending").length || data.reviews.filter(x=>x.status==="pending").length ? "New customer submissions are ready in their respective tabs." : "Nothing is waiting right now. New customer submissions will appear here."}</p></section>`;
   if (adminTab === "inquiries") return adminTable("Inquiries", data.inquiries, ["Name","Type","Message","Date","Status"], item => `<tr><td><strong>${esc(item.name)}</strong><br>${esc(item.phone)}<br>${esc(item.email)}</td><td>${esc(item.type)}</td><td>${esc(item.product ? `${item.product}: ` : "")}${esc(item.message)}</td><td>${formatDate(item.createdAt)}</td><td><select class="status-select" data-action="update-status" data-kind="inquiries" data-id="${item.id}"><option ${item.status==="new"?"selected":""}>new</option><option ${item.status==="contacted"?"selected":""}>contacted</option><option ${item.status==="resolved"?"selected":""}>resolved</option></select></td></tr>`);
   if (adminTab === "appointments") return adminTable("Appointment requests", data.appointments, ["Visitor","Requested time","Message","Date","Status"], item => `<tr><td><strong>${esc(item.name)}</strong><br>${esc(item.phone)}<br>${esc(item.email || "—")}</td><td>${esc(item.preferredDate)}<br>${esc(item.preferredTime)} · ${esc(item.ageGroup)}</td><td>${esc(item.message || "—")}</td><td>${formatDate(item.createdAt)}</td><td><select class="status-select" data-action="update-status" data-kind="appointments" data-id="${item.id}">${["pending","contacted","confirmed","completed","cancelled"].map(status=>`<option ${item.status===status?"selected":""}>${status}</option>`).join("")}</select></td></tr>`);
@@ -220,7 +245,10 @@ function adminContent(data, approved) { if (adminTab === "overview") return `<di
     const editing = data.products.find(p => p.id === editingProductId);
     return `<section class="card admin-section"><h2>Showcase products</h2><p class="admin-empty">Products are display and inquiry only. They never become products for online purchase.</p><div class="product-admin">${data.products.map(product => `<div class="product-admin-row"><div style="display:flex;gap:.75rem;align-items:center">${product.image ? `<img src="${esc(product.image)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:.5rem;flex-shrink:0">` : `<div style="width:56px;height:56px;border-radius:.5rem;background:#e7e2d8;flex-shrink:0"></div>`}<div><strong>${esc(product.name)}</strong><p>${esc(categoryTitle(product.category))} · ${esc(product.shape)} · ${esc(product.availability)}</p></div></div><div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="button button--ghost button--small" data-action="edit-product" data-id="${product.id}">Edit</button><button class="button button--ghost button--small" data-action="toggle-featured" data-id="${product.id}">${product.featured ? "Remove feature" : "Feature"}</button><button class="button button--danger button--small" data-action="delete-product" data-id="${product.id}">Delete</button></div></div>`).join("")}</div></section><section class="card form-card" style="margin-top:1rem"><h2>${editing ? `Edit “${esc(editing.name)}”` : "Add a showcase frame"}</h2><form data-form="product" class="form-grid"><div class="form-grid form-grid--two"><label>Frame name *<input name="name" required value="${editing ? esc(editing.name) : ""}"></label><label>Category *<select name="category">${CATEGORIES.map(c=>`<option value="${c.id}" ${editing?.category===c.id?"selected":""}>${c.title}</option>`).join("")}</select></label></div><div class="form-grid form-grid--two"><label>Shape *<input name="shape" required value="${editing ? esc(editing.shape) : ""}"></label><label>Material *<input name="material" required value="${editing ? esc(editing.material) : ""}"></label></div><div class="form-grid form-grid--two"><label>Colour *<input name="color" required value="${editing ? esc(editing.color) : ""}"></label><label>Age group *<input name="ageGroup" required value="${editing ? esc(editing.ageGroup) : "Adults"}"></label></div><label>Availability<input name="availability" value="${editing ? esc(editing.availability) : "Ask in store"}"></label><label>Description *<textarea name="description" required>${editing ? esc(editing.description) : ""}</textarea></label><label>Photo ${editing?.image ? "<span>(uploading a new one replaces the current photo)</span>" : "<span>(optional — JPEG, PNG, or WEBP, under 4MB)</span>"}<input type="file" name="photo" accept="image/png,image/jpeg,image/webp"></label><div style="display:flex;gap:.6rem"><button class="button button--primary" type="submit">${editing ? "Save changes" : "Add showcase frame"}</button>${editing ? `<button class="button button--ghost" type="button" data-action="cancel-edit-product">Cancel</button>` : ""}</div></form></section>`;
   }
-  if (adminTab === "services") return `<section class="card admin-section"><h2>Services shown publicly</h2><p class="admin-empty">Only enabled services are shown on the Services page.</p><div class="product-admin">${data.services.map(service => `<div class="product-admin-row"><div><strong>${esc(service.title)}</strong><p>${esc(service.description)}</p></div><button class="button ${service.enabled ? "button--primary" : "button--ghost"} button--small" data-action="toggle-service" data-id="${service.id}">${service.enabled ? "Enabled" : "Disabled"}</button></div>`).join("")}</div></section>`;
+  if (adminTab === "gallery") {
+    const items = data.gallery || [];
+    return `<section class="card admin-section"><h2>Gallery photos</h2><p class="admin-empty">Only the photo itself is required — title, description, and category are all optional, skip anything you don't want to fill in.</p><div class="product-admin">${items.length ? items.map(item => `<div class="product-admin-row"><div style="display:flex;gap:.75rem;align-items:center"><img src="${esc(item.image)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:.5rem;flex-shrink:0"><div><strong>${esc(item.title || "Untitled photo")}</strong><p>${esc(item.category || "No category")}${item.description ? ` · ${esc(item.description)}` : ""}</p></div></div><button class="button button--danger button--small" data-action="delete-gallery-item" data-id="${item.id}">Delete</button></div>`).join("") : `<p class="admin-empty">No photos yet — add the first one below.</p>`}</div></section><section class="card form-card" style="margin-top:1rem"><h2>+ Add photo</h2><form data-form="gallery" class="form-grid"><label>Photo *<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" required></label><label>Title <span>(optional)</span><input name="title" placeholder="e.g. Our new frame wall"></label><label>Description <span>(optional)</span><textarea name="description" placeholder="Optional — a line or two about this photo"></textarea></label><label>Category <span>(optional)</span><select name="category"><option value="">No category</option>${GALLERY_CATEGORIES.map(cat => `<option value="${esc(cat)}">${esc(cat)}</option>`).join("")}</select></label><button class="button button--primary" type="submit">Publish</button></form></section>`;
+  } if (adminTab === "services") return `<section class="card admin-section"><h2>Services shown publicly</h2><p class="admin-empty">Only enabled services are shown on the Services page.</p><div class="product-admin">${data.services.map(service => `<div class="product-admin-row"><div><strong>${esc(service.title)}</strong><p>${esc(service.description)}</p></div><button class="button ${service.enabled ? "button--primary" : "button--ghost"} button--small" data-action="toggle-service" data-id="${service.id}">${service.enabled ? "Enabled" : "Disabled"}</button></div>`).join("")}</div></section>`;
   if (adminTab === "content") return `<section class="card form-card"><h2>Homepage content</h2><p>Keep the core message current without changing the site layout.</p><form data-form="store" class="form-grid"><label>Announcement<input name="announcement" value="${esc(data.store.announcement)}"></label><label>Hero title<textarea name="heroTitle">${esc(data.store.heroTitle)}</textarea></label><label>Hero description<textarea name="heroDescription">${esc(data.store.heroDescription)}</textarea></label><button class="button button--primary" type="submit">Save homepage content</button></form></section>`;
   return `<section class="card form-card"><h2>Store information</h2><p>These values are used across the website. For a permanent launch configuration, also update <code>public/config/store.js</code>.</p><form data-form="store" class="form-grid"><div class="form-grid form-grid--two"><label>Store name<input name="name" value="${esc(data.store.name)}"></label><label>Phone<input name="phone" value="${esc(data.store.phone)}"></label></div><div class="form-grid form-grid--two"><label>WhatsApp number<input name="whatsapp" value="${esc(data.store.whatsapp)}"></label><label>Email<input name="email" type="email" value="${esc(data.store.email)}"></label></div><label>Address<input name="address" value="${esc(data.store.address)}"></label><label>Google Maps URL<input name="mapUrl" value="${esc(data.store.mapUrl)}"></label><button class="button button--primary" type="submit">Save store information</button></form></section>`; }
 function adminTable(title, items, headers, row) { return `<section class="card admin-section"><h2>${title}</h2>${items.length ? `<div style="overflow-x:auto"><table class="admin-table"><thead><tr>${headers.map(header=>`<th>${header}</th>`).join("")}</tr></thead><tbody>${items.map(row).join("")}</tbody></table></div>` : `<p class="admin-empty">Nothing here yet.</p>`}</section>`; }
@@ -283,6 +311,7 @@ function render() {
   else content = notFound();
   app.innerHTML = content;
   if (current === "eyewear") attachCollectionFilters();
+  if (current === "gallery") attachGalleryFilters();
   setTitle(current === "home" ? "" : current === "eye-test" ? "Book an eye test" : current.charAt(0).toUpperCase() + current.slice(1));
 }
 
@@ -296,22 +325,59 @@ document.addEventListener("click", event => {
   if (action === "inquire") openModal(inquiryModal(getProduct(target.dataset.product)));
   if (action === "inquiry") openModal(inquiryModal());
   if (action === "review") openModal(reviewModal());
+  if (action === "view-gallery-item") { const item = (runtime.gallery || []).find(g => g.id === target.dataset.id); if (item) openModal(galleryModal(item)); }
   if (action === "logout") { sessionStorage.removeItem("visiona-token"); adminData = null; location.hash = "#/"; toast("Signed out."); }
   if (action === "admin-tab") { adminTab = target.dataset.tab; render(); }
   if (action === "review-status") updateReview(target.dataset.id, target.dataset.status);
   if (action === "delete-review") deleteReview(target.dataset.id);
   if (action === "toggle-featured") toggleFeatured(target.dataset.id);
   if (action === "delete-product") deleteProduct(target.dataset.id);
+  if (action === "delete-gallery-item") deleteGalleryItem(target.dataset.id);
   if (action === "edit-product") { editingProductId = target.dataset.id; render(); document.querySelector('[data-form="product"]')?.scrollIntoView({ behavior: "smooth", block: "start" }); }
   if (action === "cancel-edit-product") { editingProductId = null; render(); }
   if (action === "toggle-service") toggleService(target.dataset.id);
 });
 document.addEventListener("change", event => { const item = event.target; if (item.dataset.action === "update-status") updateStatus(item.dataset.kind, item.dataset.id, item.value); });
-document.addEventListener("submit", event => { const form = event.target.closest("form[data-form]"); if (!form) return; event.preventDefault(); if (["inquiry", "appointment", "review"].includes(form.dataset.form)) submitCustomerForm(form); if (form.dataset.form === "login") submitLogin(form); if (form.dataset.form === "product") submitProduct(form); if (form.dataset.form === "store") submitStore(form); });
+document.addEventListener("submit", event => { const form = event.target.closest("form[data-form]"); if (!form) return; event.preventDefault(); if (["inquiry", "appointment", "review"].includes(form.dataset.form)) submitCustomerForm(form); if (form.dataset.form === "login") submitLogin(form); if (form.dataset.form === "product") submitProduct(form); if (form.dataset.form === "gallery") submitGallery(form); if (form.dataset.form === "store") submitStore(form); });
 async function updateStatus(kind, id, status) { try { await api(`/api/admin/${kind}/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); await loadAdmin(); toast("Status updated."); } catch (error) { toast(error.message, true); } }
 async function updateReview(id, status) { try { await api(`/api/admin/reviews/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); await loadAdmin(); toast(`Review ${status}.`); } catch (error) { toast(error.message, true); } }
 async function deleteReview(id) { if (!confirm("Delete this review permanently?")) return; try { await api(`/api/admin/reviews/${id}`, { method: "DELETE" }); await loadAdmin(); toast("Review deleted."); } catch (error) { toast(error.message, true); } }
 async function toggleFeatured(id) { const product = adminData?.products.find(item => item.id === id); if (!product) return; try { await api(`/api/admin/products/${id}`, { method: "PATCH", body: JSON.stringify({ featured: !product.featured }) }); await loadAdmin(); toast("Product updated."); } catch (error) { toast(error.message, true); } }
+async function submitGallery(form) {
+  if (!validateForm(form)) return;
+  const button = form.querySelector("button[type=submit]");
+  const originalLabel = button.textContent;
+  button.disabled = true;
+  try {
+    const formData = new FormData(form);
+    const fileInput = form.querySelector('input[name="photo"]');
+    const file = fileInput?.files?.[0];
+    formData.delete("photo");
+    const data = Object.fromEntries(formData);
+    if (!file) { toast("Please choose a photo.", true); return; }
+    button.textContent = "Uploading…";
+    data.imageData = await resizeImage(file);
+    await api("/api/admin/gallery", { method: "POST", body: JSON.stringify(data) });
+    toast("Photo published.");
+    await loadAdmin();
+  } catch (error) {
+    toast(error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
+}
+async function deleteGalleryItem(id) {
+  if (!confirm("Delete this photo permanently?")) return;
+  try {
+    await api(`/api/admin/gallery/${id}`, { method: "DELETE" });
+    await loadAdmin();
+    toast("Photo deleted.");
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
+
 async function deleteProduct(id) { if (!confirm("Delete this showcase frame permanently?")) return; try { await api(`/api/admin/products/${id}`, { method: "DELETE" }); if (editingProductId === id) editingProductId = null; await loadAdmin(); toast("Showcase frame deleted."); } catch (error) { toast(error.message, true); } }
 async function toggleService(id) { const service = adminData?.services.find(item => item.id === id); if (!service) return; try { await api(`/api/admin/services/${id}`, { method: "PATCH", body: JSON.stringify({ enabled: !service.enabled }) }); await loadAdmin(); toast("Service visibility updated."); } catch (error) { toast(error.message, true); } }
 window.addEventListener("hashchange", () => { closeModal(); render(); });

@@ -8,7 +8,7 @@ in `api/`.
 ## Start locally
 
 1. Create a free project at [supabase.com](https://supabase.com) if you don't have one yet.
-2. In the Supabase SQL editor, run [`database/app-state-schema.sql`](database/app-state-schema.sql) and [`database/product-images-storage.sql`](database/product-images-storage.sql).
+2. In the Supabase SQL editor, run [`database/app-state-schema.sql`](database/app-state-schema.sql), [`database/product-images-storage.sql`](database/product-images-storage.sql), and [`database/gallery-images-storage.sql`](database/gallery-images-storage.sql).
 3. Copy `.env.example` to `.env` and fill in:
    - `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` — Project Settings -> API.
    - `SUPABASE_SERVICE_ROLE_KEY` — same page, the **secret** key. Server-only, never commit it.
@@ -27,6 +27,7 @@ Import the repo in Vercel as normal, then in the Vercel project's **Environment 
 
 - `public/config/store.js` is the central, safe-to-share source for the store name, contact details, hours, map link, homepage copy, product showcase, and services.
 - **Product photos are owner-editable, no code needed.** In `/admin` → Products, "Add a showcase frame" or "Edit" on an existing one now includes a Photo field — upload a JPEG/PNG/WEBP (under 4MB; large phone photos are automatically shrunk in the browser before upload) and it's stored in Supabase Storage and shown on the site immediately.
+- **Gallery photos work the same way.** In `/admin` → Gallery, "+ Add photo" only requires the photo itself — title, description, and category are all optional, left blank if skipped. Photos show up on the public Gallery page immediately, filterable by category if more than one category is in use.
 - The **hero banner** (`public/assets/visiona-hero.png`) and **about/gallery images** (`public/assets/frame-collection.png`) are still static files replaced by editing the repo — they aren't per-product, so they didn't fit the same admin-upload flow. Worth giving these the same treatment later if the owner wants to update them without a deploy.
 - Admin edits persist in Supabase (see [`database/app-state-schema.sql`](database/app-state-schema.sql) and [`database/product-images-storage.sql`](database/product-images-storage.sql)), so they survive redeploys and work correctly across serverless function invocations.
 

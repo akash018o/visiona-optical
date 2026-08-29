@@ -1,19 +1,20 @@
 import { bad, send, readBody, requireAdmin, validStatus, text } from "../../../lib/http.js";
 import { getState, setKey } from "../../../lib/store.js";
-import { uploadProductImage, deleteProductImage } from "../../../lib/storage.js";
+import { uploadProductImage, deleteProductImage, uploadGalleryImage, deleteGalleryImage } from "../../../lib/storage.js";
 
-// Consolidates what used to be 5 separate route files (one per resource)
-// into one, to stay under Vercel Hobby's 12-serverless-function limit.
-// Handles: /api/admin/{inquiries|appointments|reviews|products|services}/{id}
+// Consolidates what would otherwise be several separate route files into
+// one, to stay under Vercel Hobby's 12-serverless-function limit.
+// Handles: /api/admin/{inquiries|appointments|reviews|products|services|gallery}/{id}
 
 const STATUS_BY_KIND = {
   inquiries: ["new", "contacted", "resolved"],
   appointments: ["pending", "contacted", "confirmed", "completed", "cancelled"],
   reviews: ["pending", "approved", "rejected"],
 };
-const KNOWN_KINDS = ["inquiries", "appointments", "reviews", "products", "services"];
-const DELETABLE_KINDS = ["reviews", "products"];
+const KNOWN_KINDS = ["inquiries", "appointments", "reviews", "products", "services", "gallery"];
+const DELETABLE_KINDS = ["reviews", "products", "gallery"];
 const PRODUCT_TEXT_FIELDS = { name: 90, category: 40, ageGroup: 40, shape: 40, material: 40, color: 40, description: 800, availability: 40 };
+const GALLERY_TEXT_FIELDS = { title: 90, description: 400, category: 40 };
 
 export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
@@ -50,6 +51,20 @@ export default async function handler(req, res) {
       } else if (kind === "services") {
         if (typeof input.enabled !== "boolean") return bad(res, 400, "Invalid service visibility.");
         item.enabled = input.enabled;
+      } else if (kind === "gallery") {
+        for (const [field, maxLength] of Object.entries(GALLERY_TEXT_FIELDS)) {
+          if (typeof input[field] === "string") item[field] = text(input[field], maxLength);
+        }
+        if (input.imageData) {
+          try {
+            const newImage = await uploadGalleryImage(input.imageData);
+            const oldImage = item.image;
+            item.image = newImage;
+            void deleteGalleryImage(oldImage);
+          } catch (uploadError) {
+            return bad(res, 400, uploadError.message);
+          }
+        }
       } else {
         const status = validStatus(input.status, STATUS_BY_KIND[kind]);
         if (!status) return bad(res, 400, "Invalid status.");
@@ -67,6 +82,7 @@ export default async function handler(req, res) {
       const [removed] = list.splice(index, 1);
       await setKey(kind, list);
       if (kind === "products" && removed.image) void deleteProductImage(removed.image);
+      if (kind === "gallery" && removed.image) void deleteGalleryImage(removed.image);
       return send(res, 200, { message: "Deleted." });
     }
 

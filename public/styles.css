@@ -187,12 +187,12 @@ input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible
 .prose p { color: var(--ink-soft); }
 .prose section { margin-bottom: 2rem; }
 .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
-.gallery-item { position: relative; min-height: 180px; overflow: hidden; border-radius: 1rem; background: url('/assets/visiona-hero.png') center/cover; }
-.gallery-item:nth-child(2), .gallery-item:nth-child(5) { background-image: url('/assets/frame-collection.png'); background-size: 260% auto; background-position: 50% 50%; }
-.gallery-item:nth-child(3) { background-position: 80% center; }
-.gallery-item:nth-child(4) { background-position: 15% center; }
+.gallery-item { display: block; position: relative; width: 100%; min-height: 180px; overflow: hidden; border-radius: 1rem; border: none; padding: 0; cursor: pointer; background-color: var(--cream); font: inherit; }
 .gallery-item::after { content: ""; position: absolute; inset: 50% 0 0; background: linear-gradient(transparent, rgba(23,35,31,.82)); }
-.gallery-item span { position: absolute; z-index: 1; left: .8rem; bottom: .65rem; color: white; font-family: Georgia, serif; font-size: 1.15rem; }
+.gallery-item span { position: absolute; z-index: 1; left: .8rem; bottom: .65rem; color: white; font-family: Georgia, serif; font-size: 1.15rem; text-align: left; }
+.filter-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.2rem; }
+.chip { padding: .45rem 1rem; border: 1px solid #cac3b8; border-radius: 999px; background: var(--paper); color: var(--ink-soft); font-size: .85rem; cursor: pointer; }
+.chip.active { border-color: var(--amber-deep); background: var(--amber); color: white; }
 .rating-summary { display: flex; flex-direction: column; justify-content: center; min-height: 180px; padding: 1.3rem; border-radius: var(--radius); background: #f2e5d0; }
 .rating-summary strong { font-family: Georgia, serif; font-size: 4rem; line-height: 1; font-weight: 400; }
 .stars { color: var(--amber-deep); letter-spacing: .05em; }
