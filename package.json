@@ -1,20 +1,17 @@
 {
-  "name": "visiona-optical",
+  "name": "rudra-optical",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node scripts/build-supabase-config.mjs",
-    "prestart": "npm run build",
     "predev": "npm run build",
-    "start": "node server.mjs",
-    "dev": "node --watch server.mjs"
+    "dev": "vercel dev"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4"
   }
 }

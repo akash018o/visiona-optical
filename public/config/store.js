@@ -2,15 +2,15 @@
 // Email credentials and admin secrets belong only in .env, never in this file.
 export const STORE_CONFIG = {
   name: "RUDRA OPTICAL",
-  shortName: "Visiona",
+  shortName: "Rudra Optical",
   tagline: "See better. Look better.",
   description: "Thoughtfully chosen eyewear, practical lens guidance, and professional eye-test appointments—close to home.",
   phone: "+91 8218841976",
   whatsapp: "+91 8218841976",
   email: "akashchauhan20005@gmail.com",
-  address: "Uttarahand, shyampur, 249204",
-  mapUrl: "https://maps.google.com/?q=Your+Optical+Store",
-  locationLabel: "shyampur",
+  address: "Shyampur, Uttarakhand, 249204",
+  mapUrl: "https://maps.google.com/?q=Rudra+Optical+Shyampur+Uttarakhand",
+  locationLabel: "Shyampur",
   openingHours: [
     ["Monday – Saturday", "10:00 AM – 8:00 PM"],
     ["Sunday", "By appointment"]
@@ -18,7 +18,7 @@ export const STORE_CONFIG = {
   heroTitle: "See better.\nLook better.",
   heroDescription: "Find eyewear that feels like you, with personal guidance and eye-test appointments at our new local optical store.",
   about: {
-    story: "Visiona Optical is a new local space being created for comfortable, considered eyewear. Replace this placeholder with the founder's story before launch.",
+    story: "Rudra Optical is a new local space being created for comfortable, considered eyewear. Replace this placeholder with the founder's story before launch.",
     vision: "To make choosing eyewear feel clear, personal, and unhurried.",
     approach: "We focus on listening first—then helping each visitor explore frames and lens options that suit their everyday life.",
     philosophy: "Eye care should be approachable. We explain options in plain language and encourage every customer to make an informed choice."
