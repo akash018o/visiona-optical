@@ -7,6 +7,7 @@ let mobileOpen = false;
 let adminTab = "overview";
 let adminData = null;
 let editingProductId = null;
+let openingHoursDraft = null;
 
 // Shrinks/compresses a photo in the browser before upload so phone photos
 // (often 5-10MB) comfortably fit the server's upload limit.
@@ -253,7 +254,10 @@ function adminContent(data, approved) { if (adminTab === "overview") return `<di
     const items = data.gallery || [];
     return `<section class="card admin-section"><h2>Gallery photos</h2><p class="admin-empty">Only the photo itself is required — title, description, and category are all optional, skip anything you don't want to fill in.</p><div class="product-admin">${items.length ? items.map(item => `<div class="product-admin-row"><div style="display:flex;gap:.75rem;align-items:center"><img src="${esc(item.image)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:.5rem;flex-shrink:0"><div><strong>${esc(item.title || "Untitled photo")}</strong><p>${esc(item.category || "No category")}${item.description ? ` · ${esc(item.description)}` : ""}</p></div></div><button class="button button--danger button--small" data-action="delete-gallery-item" data-id="${item.id}">Delete</button></div>`).join("") : `<p class="admin-empty">No photos yet — add the first one below.</p>`}</div></section><section class="card form-card" style="margin-top:1rem"><h2>+ Add photo</h2><form data-form="gallery" class="form-grid"><label>Photo *<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" required></label><label>Title <span>(optional)</span><input name="title" placeholder="e.g. Our new frame wall"></label><label>Description <span>(optional)</span><textarea name="description" placeholder="Optional — a line or two about this photo"></textarea></label><label>Category <span>(optional)</span><select name="category"><option value="">No category</option>${GALLERY_CATEGORIES.map(cat => `<option value="${esc(cat)}">${esc(cat)}</option>`).join("")}</select></label><button class="button button--primary" type="submit">Publish</button></form></section>`;
   } if (adminTab === "services") return `<section class="card admin-section"><h2>Services shown publicly</h2><p class="admin-empty">Only enabled services are shown on the Services page.</p><div class="product-admin">${data.services.map(service => `<div class="product-admin-row"><div><strong>${esc(service.title)}</strong><p>${esc(service.description)}</p></div><button class="button ${service.enabled ? "button--primary" : "button--ghost"} button--small" data-action="toggle-service" data-id="${service.id}">${service.enabled ? "Enabled" : "Disabled"}</button></div>`).join("")}</div></section>`;
-  if (adminTab === "store") return `<section class="card form-card"><h2>Store info</h2><p>Contact details and location shown across the site.</p><form data-form="store" class="form-grid"><label>Store name<input name="name" value="${esc(data.store.name)}"></label><div class="form-grid form-grid--two"><label>Phone<input name="phone" value="${esc(data.store.phone)}" placeholder="+91 8218841976"></label><label>WhatsApp number <span>(digits only, with country code, e.g. 918218841976)</span><input name="whatsapp" value="${esc(data.store.whatsapp)}"></label></div><label>Email<input type="email" name="email" value="${esc(data.store.email)}"></label><label>Address<input name="address" value="${esc(data.store.address)}"></label><label>Google Maps link<input name="mapUrl" value="${esc(data.store.mapUrl)}" placeholder="https://maps.google.com/?q=..."></label><button class="button button--primary" type="submit">Save store info</button></form></section>`;
+  if (adminTab === "store") {
+    const hours = openingHoursDraft || data.store.openingHours;
+    return `<section class="card form-card"><h2>Store info</h2><p>Contact details and location shown across the site.</p><form data-form="store" class="form-grid"><label>Store name<input name="name" value="${esc(data.store.name)}"></label><div class="form-grid form-grid--two"><label>Phone<input name="phone" value="${esc(data.store.phone)}" placeholder="+91 8218841976"></label><label>WhatsApp number <span>(digits only, with country code, e.g. 918218841976)</span><input name="whatsapp" value="${esc(data.store.whatsapp)}"></label></div><label>Email<input type="email" name="email" value="${esc(data.store.email)}"></label><label>Address<input name="address" value="${esc(data.store.address)}"></label><label>Google Maps link<input name="mapUrl" value="${esc(data.store.mapUrl)}" placeholder="https://maps.google.com/?q=..."></label><div><label style="margin-bottom:.4rem;display:block">Opening hours</label>${hours.map(([day, time], i) => `<div style="display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center"><input name="oh-day-${i}" value="${esc(day)}" placeholder="e.g. Monday – Saturday" style="flex:1"><input name="oh-hours-${i}" value="${esc(time)}" placeholder="e.g. 10:00 AM – 8:00 PM" style="flex:1"><button type="button" class="button button--danger button--small" data-action="remove-hours-row" data-index="${i}">Remove</button></div>`).join("")}<button type="button" class="button button--ghost button--small" data-action="add-hours-row">+ Add day</button></div><button class="button button--primary" type="submit">Save store info</button></form></section>`;
+  }
   if (adminTab === "content") return `<section class="card form-card"><h2>Homepage content</h2><p>Keep the core message current without changing the site layout.</p><form data-form="store" class="form-grid"><label>Announcement<input name="announcement" value="${esc(data.store.announcement)}"></label><label>Hero title<textarea name="heroTitle">${esc(data.store.heroTitle)}</textarea></label><label>Hero description<textarea name="heroDescription">${esc(data.store.heroDescription)}</textarea></label><button class="button button--primary" type="submit">Save homepage content</button></form></section>`;
   return `<section class="card form-card"><h2>Store information</h2><p>These values are used across the website. For a permanent launch configuration, also update <code>public/config/store.js</code>.</p><form data-form="store" class="form-grid"><div class="form-grid form-grid--two"><label>Store name<input name="name" value="${esc(data.store.name)}"></label><label>Phone<input name="phone" value="${esc(data.store.phone)}"></label></div><div class="form-grid form-grid--two"><label>WhatsApp number<input name="whatsapp" value="${esc(data.store.whatsapp)}"></label><label>Email<input name="email" type="email" value="${esc(data.store.email)}"></label></div><label>Address<input name="address" value="${esc(data.store.address)}"></label><label>Google Maps URL<input name="mapUrl" value="${esc(data.store.mapUrl)}"></label><button class="button button--primary" type="submit">Save store information</button></form></section>`; }
 function adminTable(title, items, headers, row) { return `<section class="card admin-section"><h2>${title}</h2>${items.length ? `<div style="overflow-x:auto"><table class="admin-table"><thead><tr>${headers.map(header=>`<th>${header}</th>`).join("")}</tr></thead><tbody>${items.map(row).join("")}</tbody></table></div>` : `<p class="admin-empty">Nothing here yet.</p>`}</section>`; }
@@ -294,7 +298,27 @@ async function submitProduct(form) {
     button.textContent = originalLabel;
   }
 }
-async function submitStore(form) { try { const saved = await api("/api/admin/store", { method: "PATCH", body: JSON.stringify(Object.fromEntries(new FormData(form))) }); runtime.store = saved.store; await loadAdmin(); toast("Store information saved."); } catch (error) { toast(error.message, true); } }
+async function submitStore(form) {
+  try {
+    const data = Object.fromEntries(new FormData(form));
+    const rowIndexes = new Set();
+    for (const key of Object.keys(data)) {
+      const match = /^oh-(day|hours)-(\d+)$/.exec(key);
+      if (match) rowIndexes.add(Number(match[2]));
+    }
+    if (rowIndexes.size) {
+      data.openingHours = [...rowIndexes].sort((a, b) => a - b).map(i => [data[`oh-day-${i}`] || "", data[`oh-hours-${i}`] || ""]);
+      for (const i of rowIndexes) { delete data[`oh-day-${i}`]; delete data[`oh-hours-${i}`]; }
+    }
+    const saved = await api("/api/admin/store", { method: "PATCH", body: JSON.stringify(data) });
+    runtime.store = saved.store;
+    openingHoursDraft = null;
+    await loadAdmin();
+    toast("Store information saved.");
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
 async function loadRuntime() { try { const data = await api("/api/public"); runtime = { ...runtime, ...data }; setSchema(); } catch { /* Static design remains visible if the server is not running. */ } }
 async function loadAdmin() { try { adminData = await api("/api/admin"); render(); } catch (error) { if (/author/i.test(error.message)) { sessionStorage.removeItem("visiona-token"); adminData = null; render(); } else toast(error.message, true); } }
 function setSchema() { document.querySelector("#local-business-schema").textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "Optician", name: runtime.store.name, description: runtime.store.description, telephone: runtime.store.phone, email: runtime.store.email, address: runtime.store.address, openingHours: runtime.store.openingHours.map(x => `${x[0]} ${x[1]}`) }); }
@@ -340,6 +364,8 @@ document.addEventListener("click", event => {
   if (action === "delete-gallery-item") deleteGalleryItem(target.dataset.id);
   if (action === "edit-product") { editingProductId = target.dataset.id; render(); document.querySelector('[data-form="product"]')?.scrollIntoView({ behavior: "smooth", block: "start" }); }
   if (action === "cancel-edit-product") { editingProductId = null; render(); }
+  if (action === "add-hours-row") { openingHoursDraft = [...(openingHoursDraft || adminData?.store.openingHours || []), ["", ""]]; render(); }
+  if (action === "remove-hours-row") { const base = openingHoursDraft || adminData?.store.openingHours || []; openingHoursDraft = base.filter((_, i) => i !== Number(target.dataset.index)); render(); }
   if (action === "toggle-service") toggleService(target.dataset.id);
 });
 document.addEventListener("change", event => { const item = event.target; if (item.dataset.action === "update-status") updateStatus(item.dataset.kind, item.dataset.id, item.value); });

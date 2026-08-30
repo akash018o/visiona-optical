@@ -27,6 +27,11 @@ export default async function handler(req, res) {
       if (cleaned.length < 7) return bad(res, 400, "Please enter a valid WhatsApp number, digits only with country code (e.g. 918218841976).");
       store.whatsapp = cleaned;
     }
+    if (Array.isArray(input.openingHours)) {
+      store.openingHours = input.openingHours
+        .filter((row) => Array.isArray(row) && row.length === 2)
+        .map(([day, hours]) => [text(day, 40), text(hours, 60)]);
+    }
     await setKey("store", store);
     return send(res, 200, { store });
   } catch (error) {

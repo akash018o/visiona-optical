@@ -15,6 +15,7 @@ export default async function handler(req, res) {
     return send(res, 200, { token: sign({ role: "admin", exp: Date.now() + 12 * 60 * 60 * 1000 }) });
   } catch (error) {
     console.error(error);
+    if (error.message?.includes("not configured correctly")) return bad(res, 500, error.message);
     return bad(res, 500, "We couldn't complete that request. Please try again.");
   }
 }
