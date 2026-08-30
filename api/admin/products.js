@@ -16,9 +16,6 @@ export default async function handler(req, res) {
     const description = text(input.description, 800);
     const category = text(input.category, 40);
     const availability = text(input.availability, 40) || "Ask in store";
-    if (!name || !shape || !material || !color || !ageGroup || !description || !category) {
-      return bad(res, 400, "Please complete every product field.");
-    }
 
     let image = null;
     if (input.imageData) {
@@ -37,7 +34,7 @@ export default async function handler(req, res) {
       shape,
       material,
       color,
-      style: `${shape} frame`,
+      style: shape ? `${shape} frame` : "",
       description,
       availability,
       featured: false,

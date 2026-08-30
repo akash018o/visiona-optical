@@ -32,11 +32,9 @@ export default async function handler(req, res) {
 
       if (kind === "products") {
         for (const [field, maxLength] of Object.entries(PRODUCT_TEXT_FIELDS)) {
-          if (typeof input[field] === "string" && text(input[field], maxLength)) {
-            item[field] = text(input[field], maxLength);
-          }
+          if (typeof input[field] === "string") item[field] = text(input[field], maxLength);
         }
-        if (typeof item.shape === "string") item.style = `${item.shape} frame`;
+        item.style = item.shape ? `${item.shape} frame` : "";
         if (typeof input.featured === "boolean") item.featured = input.featured;
         if (input.imageData) {
           try {
