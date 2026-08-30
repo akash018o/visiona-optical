@@ -295,7 +295,7 @@ async function loadAdmin() { try { adminData = await api("/api/admin"); render()
 function setSchema() { document.querySelector("#local-business-schema").textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "Optician", name: runtime.store.name, description: runtime.store.description, telephone: runtime.store.phone, email: runtime.store.email, address: runtime.store.address, openingHours: runtime.store.openingHours.map(x => `${x[0]} ${x[1]}`) }); }
 
 function render() {
-  const current = route(); mobileOpen = false;
+  const current = route();
   if (current === "admin") { app.innerHTML = admin(); return; }
   let content;
   if (current === "home") content = home();
@@ -380,7 +380,7 @@ async function deleteGalleryItem(id) {
 
 async function deleteProduct(id) { if (!confirm("Delete this showcase frame permanently?")) return; try { await api(`/api/admin/products/${id}`, { method: "DELETE" }); if (editingProductId === id) editingProductId = null; await loadAdmin(); toast("Showcase frame deleted."); } catch (error) { toast(error.message, true); } }
 async function toggleService(id) { const service = adminData?.services.find(item => item.id === id); if (!service) return; try { await api(`/api/admin/services/${id}`, { method: "PATCH", body: JSON.stringify({ enabled: !service.enabled }) }); await loadAdmin(); toast("Service visibility updated."); } catch (error) { toast(error.message, true); } }
-window.addEventListener("hashchange", () => { closeModal(); render(); });
+window.addEventListener("hashchange", () => { closeModal(); mobileOpen = false; render(); });
 setSchema();
 await loadRuntime();
 render();

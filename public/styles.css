@@ -219,7 +219,7 @@ input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible
 .admin-shell { min-height: 100vh; background: #eef0eb; }
 .admin-head { display: flex; min-height: 72px; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 1rem; color: var(--paper); background: var(--ink); }
 .admin-main { width: min(calc(100% - 2rem), 1150px); margin: 0 auto; padding: 1.5rem 0 6rem; }
-.admin-main h1 { margin: .4rem 0 1.2rem; font-size: clamp(2.9rem, 11vw, 5rem); }
+.admin-main h1 { margin: .4rem 0 1.2rem; font-family: Georgia, serif; font-weight: 400; font-size: 1.9rem; letter-spacing: -.02em; }
 .admin-login { display: grid; min-height: 75vh; padding: 1rem; place-items: center; }
 .admin-login .form-card { width: min(100%, 460px); }
 .admin-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; overflow-x: auto; }
@@ -238,7 +238,7 @@ input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible
 .status-select { width: auto; min-height: 34px; padding: .3rem; font-size: .74rem; }
 .admin-empty { padding: 1.2rem 0; color: var(--ink-soft); }
 .product-admin { display: grid; gap: 1rem; }
-.product-admin-row { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .8rem 0; border-bottom: 1px solid var(--line); }
+.product-admin-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem; padding: .8rem 0; border-bottom: 1px solid var(--line); }
 .product-admin-row p { margin: .18rem 0 0; color: var(--ink-soft); font-size: .76rem; }
 
 /* footer and desktop */
