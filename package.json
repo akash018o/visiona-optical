@@ -4,9 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build-supabase-config.mjs",
-    "predev": "npm run build",
-    "dev": "vercel dev"
+    "build": "node scripts/build-supabase-config.mjs"
   },
   "engines": {
     "node": ">=20"
