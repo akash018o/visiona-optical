@@ -731,7 +731,13 @@ async function loadRuntime() {
 }
 async function loadAdmin() {
   try {
-    adminData = await api("/api/admin");
+    // Admin actions (add/edit/delete product or gallery photo, approve a
+    // review, toggle a service, save store info) all change data that also
+    // shows on the public site. Refreshing only adminData left the public
+    // pages showing stale content until a hard refresh — refreshing both
+    // together fixes that at the source, for every admin action at once.
+    const [adminResult] = await Promise.all([api("/api/admin"), loadRuntime()]);
+    adminData = adminResult;
     render();
   } catch (error) {
     if (/author/i.test(error.message)) { sessionStorage.removeItem("visiona-token"); adminData = null; render(); }
