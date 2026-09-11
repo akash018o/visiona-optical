@@ -94,7 +94,7 @@ const STRINGS = {
     "reviewForm.name": "Name *", "reviewForm.rating": "Rating *", "reviewForm.selectRating": "Select a rating",
     "reviewForm.r5": "5 - Excellent", "reviewForm.r4": "4 - Very good", "reviewForm.r3": "3 - Good", "reviewForm.r2": "2 - Fair", "reviewForm.r1": "1 - Needs improvement",
     "reviewForm.review": "Review *", "reviewForm.reviewPlaceholder": "Please share your experience in your own words.", "reviewForm.submit": "Submit for approval",
-    "gallery.heroEyebrow": "Gallery", "gallery.heroHeading": "A glimpse inside ", "gallery.heroText": "Photos from the store, added and updated any time by the team, no code required.",
+    "gallery.heroEyebrow": "Gallery", "gallery.heroHeading": (name) => "A glimpse inside " + name + ".", "gallery.heroText": "Photos from the store, added and updated any time by the team, no code required.",
     "gallery.willAppear": "Photos will appear here once the team adds them from the admin panel.", "gallery.all": "All",
     "notFound.eyebrow": "Not found", "notFound.heading": "That page isn't here.", "notFound.text": "Try heading back home or exploring the current eyewear showcase.",
     "notFound.goHome": "Go home", "notFound.viewEyewear": "View eyewear",
@@ -185,7 +185,7 @@ const STRINGS = {
     "reviewForm.name": "नाम *", "reviewForm.rating": "रेटिंग *", "reviewForm.selectRating": "एक रेटिंग चुनें",
     "reviewForm.r5": "5 - उत्कृष्ट", "reviewForm.r4": "4 - बहुत अच्छा", "reviewForm.r3": "3 - अच्छा", "reviewForm.r2": "2 - ठीक-ठाक", "reviewForm.r1": "1 - सुधार की जरूरत",
     "reviewForm.review": "समीक्षा *", "reviewForm.reviewPlaceholder": "कृपया अपने शब्दों में अपना अनुभव साझा करें।", "reviewForm.submit": "स्वीकृति के लिए भेजें",
-    "gallery.heroEyebrow": "गैलरी", "gallery.heroHeading": "", "gallery.heroText": "स्टोर की तस्वीरें, टीम द्वारा कभी भी जोड़ी और अपडेट की जाती हैं, कोई कोड जरूरी नहीं।",
+    "gallery.heroEyebrow": "गैलरी", "gallery.heroHeading": (name) => name + " की एक झलक।", "gallery.heroText": "स्टोर की तस्वीरें, टीम द्वारा कभी भी जोड़ी और अपडेट की जाती हैं, कोई कोड जरूरी नहीं।",
     "gallery.willAppear": "टीम द्वारा एडमिन पैनल से फोटो जोड़ने के बाद यहां दिखाई देंगी।", "gallery.all": "सभी",
     "notFound.eyebrow": "नहीं मिला", "notFound.heading": "यह पेज यहां नहीं है।", "notFound.text": "होम पेज पर वापस जाएं या मौजूदा आईवियर संग्रह देखें।",
     "notFound.goHome": "होम पर जाएं", "notFound.viewEyewear": "आईवियर देखें",
@@ -479,7 +479,7 @@ function gallery() {
   const categories = [t("gallery.all")].concat(GALLERY_CATEGORIES.filter(function (cat) { return items.some(function (item) { return item.category === cat; }); }));
   const chips = items.length ? ('<div class="filter-row">' + categories.map(function (cat) { return '<button class="chip ' + (cat === t("gallery.all") ? "active" : "") + '" data-gallery-filter="' + esc(cat) + '">' + esc(cat) + '</button>'; }).join("") + '</div>') : "";
   const grid = items.length ? items.map(galleryTile).join("") : ('<p class="admin-empty">' + t("gallery.willAppear") + '</p>');
-  return layout(pageHero(t("gallery.heroEyebrow"), t("gallery.heroHeading") + esc(runtime.store.name), t("gallery.heroText")) +
+  return layout(pageHero(t("gallery.heroEyebrow"), t("gallery.heroHeading", runtime.store.name), t("gallery.heroText")) +
     '<section class="section section--cream"><div class="container">' + chips + '<div class="gallery-grid" id="gallery-grid">' + grid + '</div></div></section>', "gallery");
 }
 function galleryTile(item) {
