@@ -38,12 +38,3 @@ Import the repo in Vercel as normal, then in the Vercel project's **Environment 
 - The admin area supports status updates, review moderation, product showcase creation/removal, service visibility, store information, and homepage copy.
 - When `RESEND_API_KEY` and `EMAIL_FROM` are supplied, new submissions are delivered to the configured store email through Resend. Without those settings they're still safely stored and visible in the admin dashboard.
 
-## Before launch
-
-- [ ] Resolve the store name: `public/config/store.js` currently has `name: "RUDRA OPTICAL"` — confirmed as the real name, now used consistently everywhere.
-- [ ] Replace the temporary business details in `public/config/store.js` — the `about.story` text, `mapUrl`, and the phone/email currently there.
-- [ ] Replace `public/assets/visiona-hero.png` and `public/assets/frame-collection.png` (hero banner + about/gallery imagery) with real photos — product photos themselves are now handled in `/admin`, no code change needed.
-- [ ] Run `node scripts/hash-password.mjs` for a real admin password and set a real random `TOKEN_SECRET` in Vercel — don't ship the placeholder values from `.env.example`.
-- [ ] Configure `RESEND_API_KEY` / `EMAIL_FROM` so you actually get emailed when someone submits a form.
-- [ ] Consider migrating from `app_state`/`rate_limits` to the fully-normalized [`database/schema.sql`](database/schema.sql) once you need richer queries (e.g. filtering products by category in SQL) — not required to launch.
-- [ ] Have the privacy and terms starter text checked for your local requirements.
